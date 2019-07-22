@@ -34,14 +34,21 @@ var defaultCrypto = {
 module.exports = Feed
 
 function Feed (createStorage, key, opts) {
+  // Return a new instance of feed allowing user to create "const feed = Feed()" with new
   if (!(this instanceof Feed)) return new Feed(createStorage, key, opts)
+
+  // Appends EventEmitter properties to Feed
   events.EventEmitter.call(this)
 
+  // create storage using raf
   if (typeof createStorage === 'string') createStorage = defaultStorage(createStorage)
+  // defaultStorage should return a function
   if (typeof createStorage !== 'function') throw new Error('Storage should be a function or string')
 
+  // create a buffer from the string "key" passed in args
   if (typeof key === 'string') key = Buffer.from(key, 'hex')
 
+  // Maybe : if user pass opts as 2nd argument
   if (!Buffer.isBuffer(key) && !opts) {
     opts = key
     key = null
@@ -49,11 +56,16 @@ function Feed (createStorage, key, opts) {
 
   if (!opts) opts = {}
 
+  // ? => Ask @g-ray
   var self = this
 
+  // set secretKey and convert to Buffer if necessary
   var secretKey = opts.secretKey || null
   if (typeof secretKey === 'string') secretKey = Buffer.from(secretKey, 'hex')
 
+  // This block set opts to class variables and other shits.
+  // this.id : Returns a buffer containing random bytes of size size.
+  // Doc => https://github.com/mafintosh/hypercore-crypto
   this.id = opts.id || crypto.randomBytes(32)
   this.live = opts.live !== false
   this.sparse = !!opts.sparse
@@ -61,6 +73,7 @@ function Feed (createStorage, key, opts) {
   this.byteLength = 0
   this.maxRequests = opts.maxRequests || 16
   this.key = key || opts.key || null
+  // Return a hash derived from a publicKey that can used for discovery without disclosing the public key.
   this.discoveryKey = this.key && crypto.discoveryKey(this.key)
   this.secretKey = secretKey
   this.bitfield = null
@@ -1201,6 +1214,7 @@ Feed.prototype.append = function (batch, cb) {
   if (!cb) cb = noop
 
   var self = this
+  console.log('in Feed.prototype.append', self, batch)
   var list = Array.isArray(batch) ? batch : [batch]
   this._batch(list, onappend)
 
